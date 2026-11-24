@@ -1,0 +1,51 @@
+Processing standard order `ORD-2026-102` under the current inventory scarcity conditions:
+- Available units for `SKU-MED-99` is currently 5 units.
+- Allocating the remaining 5 units to `ORD-2026-102` results in an allocated quantity of 5, a backordered quantity of 5, and status `PARTIALLY_FULFILLED`.
+- The warehouse inventory ledger is updated so that `allocated` becomes 20 and `available` becomes 0, satisfying the inventory non-negativity invariant (`on_hand == available + allocated`).
+
+===FILE: trade/orders.json===
+{
+  "ORD-2026-101": {
+    "customer": "Apex Health Logistics",
+    "priority": "HIGH",
+    "sku": "SKU-MED-99",
+    "requested_qty": 15,
+    "allocated_qty": 15,
+    "backordered_qty": 0,
+    "status": "ALLOCATED"
+  },
+  "ORD-2026-102": {
+    "customer": "BioCare Regional Labs",
+    "priority": "STANDARD",
+    "sku": "SKU-MED-99",
+    "requested_qty": 10,
+    "allocated_qty": 5,
+    "backordered_qty": 5,
+    "status": "PARTIALLY_FULFILLED"
+  }
+}
+===END===
+
+===FILE: warehouse/inventory.json===
+{
+  "SKU-MED-99": {
+    "name": "Rapid Diagnostic Reagent Pack",
+    "on_hand": 20,
+    "allocated": 20,
+    "available": 0,
+    "safety_stock": 0,
+    "allocations": [
+      {
+        "order_id": "ORD-2026-101",
+        "qty": 15,
+        "allocated_at": "2026-11-24T18:00:00Z"
+      },
+      {
+        "order_id": "ORD-2026-102",
+        "qty": 5,
+        "allocated_at": "2026-11-24T18:00:00Z"
+      }
+    ]
+  }
+}
+===END===

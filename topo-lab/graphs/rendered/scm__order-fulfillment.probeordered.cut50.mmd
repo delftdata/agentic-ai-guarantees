@@ -1,0 +1,15 @@
+flowchart TD
+    t0_intake[t0_intake]
+    t1_allocate_urgent[t1_allocate_urgent]
+    t2_allocate_standard[t2_allocate_standard]
+    t3_dispatch_carrier[t3_dispatch_carrier]
+    t4_audit_manifest[t4_audit_manifest]
+    t0_intake -.-> t1_allocate_urgent
+    t0_intake -.-> t2_allocate_standard
+    t1_allocate_urgent --> t2_allocate_standard
+    t1_allocate_urgent --> t3_dispatch_carrier
+    t0_intake --> t4_audit_manifest
+    t1_allocate_urgent --> t4_audit_manifest
+    t2_allocate_standard --> t4_audit_manifest
+    t3_dispatch_carrier --> t4_audit_manifest
+    style t4_audit_manifest stroke-width:3px

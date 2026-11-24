@@ -25,9 +25,19 @@ from typing import Annotated, TypedDict
 from langgraph.graph import StateGraph, START, END
 
 ROOT = Path(__file__).resolve().parent.parent
-MODELS = {"opus": "claude-opus-4-8", "haiku": "claude-haiku-4-5"}
+MODELS = {
+    "opus": "claude-opus-4-8",
+    "haiku": "claude-haiku-4-5",
+    "gemini-flash": "gemini-3.5-flash",
+    "gemini-flash-lite": "gemini-3.5-flash-lite",
+}
 # USD per MTok: (input, output); cache reads billed at 10% of input
-RATES = {"opus": (5.0, 25.0), "haiku": (1.0, 5.0)}
+RATES = {
+    "opus": (5.0, 25.0),
+    "haiku": (1.0, 5.0),
+    "gemini-flash": (0.075, 0.30),
+    "gemini-flash-lite": (0.0375, 0.15),
+}
 MAX_TOKENS = 32000
 
 FILE_BLOCK = re.compile(r"===FILE: (.*?)===\n(.*?)===END===", re.DOTALL)
@@ -103,7 +113,56 @@ def make_node(spec, task_context, agent, mock, is_final, run_dir):
         status, error = "success", None
         usage = {"input_tokens": 0, "output_tokens": 0, "cache_read": 0}
         if mock:
-            if is_final:
+            if spec["id"] == "t0_intake":
+                text = "[Order Intake Assessment: Verified ORD-2026-101 (15 units, HIGH) and ORD-2026-102 (10 units, STANDARD). Total demand: 25 units.]"
+            elif spec["id"] == "t1_allocate_urgent":
+                orders = json.loads(state["files"].get("trade/orders.json", {}).get("content", "{}"))
+                inv = json.loads(state["files"].get("warehouse/inventory.json", {}).get("content", "{}"))
+                inv["SKU-MED-99"]["allocated"] += 15
+                inv["SKU-MED-99"]["available"] -= 15
+                inv["SKU-MED-99"]["allocations"].append({"order_id": "ORD-2026-101", "qty": 15, "allocated_at": "2026-11-24T18:00:00Z"})
+                orders["ORD-2026-101"]["allocated_qty"] = 15
+                orders["ORD-2026-101"]["backordered_qty"] = 0
+                orders["ORD-2026-101"]["status"] = "ALLOCATED"
+                text = (f"===FILE: trade/orders.json===\n{json.dumps(orders, indent=2)}\n===END===\n"
+                        f"===FILE: warehouse/inventory.json===\n{json.dumps(inv, indent=2)}\n===END===")
+            elif spec["id"] == "t2_allocate_standard":
+                orders = json.loads(state["files"].get("trade/orders.json", {}).get("content", "{}"))
+                inv = json.loads(state["files"].get("warehouse/inventory.json", {}).get("content", "{}"))
+                avail = inv["SKU-MED-99"]["available"]
+                to_alloc = min(10, max(0, avail))
+                backorder = 10 - to_alloc
+                inv["SKU-MED-99"]["allocated"] += to_alloc
+                inv["SKU-MED-99"]["available"] -= to_alloc
+                inv["SKU-MED-99"]["allocations"].append({"order_id": "ORD-2026-102", "qty": to_alloc, "allocated_at": "2026-11-24T18:00:00Z"})
+                orders["ORD-2026-102"]["allocated_qty"] = to_alloc
+                orders["ORD-2026-102"]["backordered_qty"] = backorder
+                orders["ORD-2026-102"]["status"] = "ALLOCATED" if backorder == 0 else "PARTIALLY_FULFILLED"
+                text = (f"===FILE: trade/orders.json===\n{json.dumps(orders, indent=2)}\n===END===\n"
+                        f"===FILE: warehouse/inventory.json===\n{json.dumps(inv, indent=2)}\n===END===")
+            elif spec["id"] == "t3_dispatch_carrier":
+                orders = json.loads(state["files"].get("trade/orders.json", {}).get("content", "{}"))
+                shps = json.loads(state["files"].get("fulfillment/shipments.json", {}).get("content", "{}"))
+                if orders.get("ORD-2026-101", {}).get("status") in ("ALLOCATED", "DISPATCHED"):
+                    shps["shipments"].append({
+                        "shipment_id": "SHP-2026-901",
+                        "order_id": "ORD-2026-101",
+                        "carrier": "CARRIER-DHL-EXPRESS",
+                        "tracking_number": "TRK-DHL-8831",
+                        "service_level": "NEXT_DAY_AIR",
+                        "packages": 1,
+                        "status": "DISPATCHED"
+                    })
+                text = f"===FILE: fulfillment/shipments.json===\n{json.dumps(shps, indent=2)}\n===END==="
+            elif spec["id"] == "t4_audit_manifest":
+                manifest = {
+                    "audit_status": "AUDITED",
+                    "total_allocated": 20,
+                    "orders_audited": ["ORD-2026-101", "ORD-2026-102"],
+                    "anomalies_detected": []
+                }
+                text = f"===FILE: audit/manifest.json===\n{json.dumps(manifest, indent=2)}\n===END==="
+            elif is_final:
                 text = "diff --git a/MOCK b/MOCK\n--- a/MOCK\n+++ b/MOCK\n"
             elif spec["writes"]:
                 blocks = []
@@ -115,6 +174,32 @@ def make_node(spec, task_context, agent, mock, is_final, run_dir):
                 text = f"[mock analysis from {spec['id']}]"
             usage["input_tokens"] = (len(task_context) + len(user)) // 4
             usage["output_tokens"] = len(text) // 4
+        elif agent.startswith("gemini"):
+            import os
+            from google import genai
+            api_key = os.environ.get("GOOGLE_API_KEY")
+            client = genai.Client(api_key=api_key)
+            try:
+                for attempt in range(6):
+                    try:
+                        resp = client.models.generate_content(
+                            model=MODELS[agent],
+                            contents=user,
+                            config={"system_instruction": task_context}
+                        )
+                        text = resp.text or ""
+                        if resp.usage_metadata:
+                            usage["input_tokens"] = resp.usage_metadata.prompt_token_count or 0
+                            usage["output_tokens"] = resp.usage_metadata.candidates_token_count or 0
+                        break
+                    except Exception as e:
+                        err_str = str(e)
+                        if ("503" in err_str or "429" in err_str) and attempt < 5:
+                            time.sleep(4 * (attempt + 1))
+                            continue
+                        raise
+            except Exception as e:
+                text, status, error = "", "failure", repr(e)
         else:
             import anthropic
             client = anthropic.Anthropic()

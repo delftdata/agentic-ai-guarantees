@@ -1,0 +1,25 @@
+Order Intake Assessment for SKU-MED-99 Inventory Allocation:
+
+1. **Inventory Scarcity Overview**:
+   - Total available physical inventory: 20 units (`on_hand: 20`, `available: 20`).
+   - Total incoming demand: 25 units across two pending orders.
+   - Deficit: 5 units require backordering.
+
+2. **High-Priority Order (ORD-2026-101)**:
+   - **Customer**: Apex Health Logistics
+   - **Priority**: HIGH
+   - **Requested Qty**: 15 units
+   - **Allocation Plan**: Fully allocate requested 15 units.
+   - **Status Update**: FULFILLED (upon inventory allocation) / Trigger 3PL carrier booking (`CARRIER-DHL-EXPRESS`).
+
+3. **Standard Order (ORD-2026-102)**:
+   - **Customer**: BioCare Regional Labs
+   - **Priority**: STANDARD
+   - **Requested Qty**: 10 units
+   - **Allocation Plan**: Allocate remaining available inventory (5 units).
+   - **Backorder Qty**: 5 units.
+   - **Status Update**: PARTIALLY_FULFILLED.
+
+4. **Invariants Compliance**:
+   - Ensures `allocated <= on_hand` (Total allocated: 15 + 5 = 20 units; On-hand: 20 units; Available: 0 units).
+   - Strict adherence to priority-based allocation SOP.

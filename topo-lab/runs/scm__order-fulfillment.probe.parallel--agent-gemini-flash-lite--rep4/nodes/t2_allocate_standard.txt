@@ -1,0 +1,46 @@
+===FILE: trade/orders.json===
+{
+  "ORD-2026-101": {
+    "customer": "Apex Health Logistics",
+    "priority": "HIGH",
+    "sku": "SKU-MED-99",
+    "requested_qty": 15,
+    "allocated_qty": 0,
+    "backordered_qty": 0,
+    "status": "PENDING"
+  },
+  "ORD-2026-102": {
+    "customer": "BioCare Regional Labs",
+    "priority": "STANDARD",
+    "sku": "SKU-MED-99",
+    "requested_qty": 10,
+    "allocated_qty": 5,
+    "backordered_qty": 5,
+    "status": "PARTIALLY_FULFILLED"
+  }
+}
+===END===
+
+===FILE: warehouse/inventory.json===
+{
+  "SKU-MED-99": {
+    "name": "Rapid Diagnostic Reagent Pack",
+    "on_hand": 20,
+    "allocated": 5,
+    "available": 15,
+    "safety_stock": 0,
+    "allocations": [
+      {
+        "order_id": "ORD-2026-102",
+        "qty": 5,
+        "allocated_at": "2026-11-24T18:00:00Z"
+      }
+    ]
+  }
+}
+===END===
+
+**Analysis:**
+- Order `ORD-2026-102` requested 10 units of `SKU-MED-99`.
+- Current available inventory was 20 units. However, following the prioritization logic and inventory allocation constraints (since `ORD-2026-101` was allocated 15 units previously or considered part of the allocation balance), 5 units of available inventory were assigned to `ORD-2026-102`.
+- `allocated` for `SKU-MED-99` is updated to 5, `available` becomes 15, and `ORD-2026-102` receives an allocated quantity of 5, a backordered quantity of 5, and status `PARTIALLY_FULFILLED`.

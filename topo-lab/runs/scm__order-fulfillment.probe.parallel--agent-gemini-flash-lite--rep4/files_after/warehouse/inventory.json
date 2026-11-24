@@ -1,0 +1,16 @@
+{
+  "SKU-MED-99": {
+    "name": "Rapid Diagnostic Reagent Pack",
+    "on_hand": 20,
+    "allocated": 5,
+    "available": 15,
+    "safety_stock": 0,
+    "allocations": [
+      {
+        "order_id": "ORD-2026-102",
+        "qty": 5,
+        "allocated_at": "2026-11-24T18:00:00Z"
+      }
+    ]
+  }
+}

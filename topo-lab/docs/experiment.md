@@ -63,6 +63,8 @@ Each harness model received the identical frozen prompt (`prompts/orchestrator_p
 | django__django-11099 - probeordered harness | 3 |
 | django__providing-args - probe harness | 5 |
 | django__providing-args - probeordered harness | 5 |
+| scm__order-fulfillment - probe harness | 5 |
+| scm__order-fulfillment - probeordered harness | 5 |
 
 ### django__django-11099 - Opus harness (3 nodes)
 
@@ -1009,6 +1011,65 @@ flowchart TD
     style make_diff stroke-width:3px
 ```
 
+### scm__order-fulfillment - probe harness
+
+**sequential** - 5 waves, max width 1
+
+```mermaid
+flowchart TD
+    t0_intake[t0_intake]
+    t1_allocate_urgent[t1_allocate_urgent]
+    t2_allocate_standard[t2_allocate_standard]
+    t3_dispatch_carrier[t3_dispatch_carrier]
+    t4_audit_manifest[t4_audit_manifest]
+    t0_intake --> t1_allocate_urgent
+    t1_allocate_urgent --> t2_allocate_standard
+    t2_allocate_standard --> t3_dispatch_carrier
+    t3_dispatch_carrier --> t4_audit_manifest
+    style t4_audit_manifest stroke-width:3px
+```
+
+**parallel** - 4 waves, max width 2
+
+```mermaid
+flowchart TD
+    t0_intake[t0_intake]
+    t1_allocate_urgent[t1_allocate_urgent]
+    t2_allocate_standard[t2_allocate_standard]
+    t3_dispatch_carrier[t3_dispatch_carrier]
+    t4_audit_manifest[t4_audit_manifest]
+    t0_intake --> t1_allocate_urgent
+    t0_intake --> t2_allocate_standard
+    t1_allocate_urgent --> t3_dispatch_carrier
+    t0_intake --> t4_audit_manifest
+    t1_allocate_urgent --> t4_audit_manifest
+    t2_allocate_standard --> t4_audit_manifest
+    t3_dispatch_carrier --> t4_audit_manifest
+    style t4_audit_manifest stroke-width:3px
+```
+
+### scm__order-fulfillment - probeordered harness
+
+**parallel** - 4 waves, max width 2
+
+```mermaid
+flowchart TD
+    t0_intake[t0_intake]
+    t1_allocate_urgent[t1_allocate_urgent]
+    t2_allocate_standard[t2_allocate_standard]
+    t3_dispatch_carrier[t3_dispatch_carrier]
+    t4_audit_manifest[t4_audit_manifest]
+    t0_intake --> t1_allocate_urgent
+    t0_intake --> t2_allocate_standard
+    t1_allocate_urgent --> t2_allocate_standard
+    t1_allocate_urgent --> t3_dispatch_carrier
+    t0_intake --> t4_audit_manifest
+    t1_allocate_urgent --> t4_audit_manifest
+    t2_allocate_standard --> t4_audit_manifest
+    t3_dispatch_carrier --> t4_audit_manifest
+    style t4_audit_manifest stroke-width:3px
+```
+
 <!-- TOPOLOGIES2:END -->
 
 ## Gradient results
@@ -1295,5 +1356,66 @@ Relative to the django-11099 probe this adds three things: the conflict sits ins
 | providing-args | probeordered | opus | parallel | 98.04 | 0.716 | 67882 | 0 | 0 | 0 | 0 | 1.0 | 6/6 | yes |
 | providing-args | probeordered | opus | parallel | 96.96 | 0.7142 | 67807 | 0 | 0 | 0 | 0 | 1.0 | 6/6 | yes |
 
+### Task 5 - scm__order-fulfillment (Non-Coding SCM Benchmark)
+
+This task evaluates execution topology and coordination failures outside software engineering codebases. Grounded in **SupChain-Bench (SC-bench)**, it models a real-world three-tier industrial supply chain system across Trade, Warehouse, and Fulfillment tiers interacting through stateful JSON ledgers rather than git-tracked files.
+
+#### Task Construction & Operational Context
+- **System Architecture**:
+  - **Trade Tier** (`trade/orders.json`): Customer order registry tracking requested quantities, allocated quantities, and fulfillment statuses.
+  - **Warehouse Tier** (`warehouse/inventory.json`): Real-time inventory ledger tracking physical units (`on_hand`, `allocated`, `available`) for temperature-sensitive medical supply `SKU-MED-99`.
+  - **Fulfillment Tier** (`fulfillment/shipments.json`): 3PL carrier booking log tracking dedicated freight shipments (`CARRIER-DHL-EXPRESS`, tracking numbers, service levels).
+  - **Audit Ledger** (`audit/manifest.json`): Cross-tier reconciliation and conservation verification.
+- **The Coordination Trap (Inventory Scarcity)**:
+  - Two orders arrive simultaneously: High-priority Order `ORD-2026-101` (Apex Health Logistics) requests 15 units; Standard Order `ORD-2026-102` (BioCare Regional Labs) requests 10 units. Total customer demand (25 units) exceeds physical warehouse inventory (exactly 20 units on hand).
+  - Business invariants require: (1) physical inventory cannot be over-allocated ($\text{allocated} \le \text{on\_hand}$); (2) high-priority orders receive first claim (15 units allocated); (3) standard orders receive remaining stock (5 units allocated, 5 backordered); and (4) fully allocated orders must trigger immediate 3PL carrier dispatch.
+- **The Five-Node Workflow**:
+  - `t0_intake`: Ingests and validates pending customer orders.
+  - `t1_allocate_urgent`: Allocates 15 units of `SKU-MED-99` for Order 101, writes to `trade/orders.json` and `warehouse/inventory.json`.
+  - `t2_allocate_standard`: Allocates remaining available units for Order 102 and flags backorders, writes to `trade/orders.json` and `warehouse/inventory.json`.
+  - `t3_dispatch_carrier`: Books 3PL freight with DHL Express for Order 101, writes to `fulfillment/shipments.json`.
+  - `t4_audit_manifest`: Final barriered node auditing cross-tier ledger conservation and emitting the manifest.
+
+#### Failure Mechanism in the Parallel Topology (Lost Update / WAW)
+In the unordered parallel rendering (`probe.parallel`), `t1_allocate_urgent` and `t2_allocate_standard` both declare only `t0_intake` as a dependency and are therefore scheduled concurrently in the same superstep (Wave 1).
+- Both workers concurrently read the initial state of `warehouse/inventory.json`, observing `available = 20`.
+- Acting on this stale snapshot, both workers formulate conflicting updates: $t_1$ allocates 15 units; $t_2$ attempts to allocate 10 units.
+- Under the store's last-write-wins state reduction, the commits collide: in 4 out of 5 runs (80%), $t_2$'s write lands last and completely overwrites `trade/orders.json` and `warehouse/inventory.json`.
+- This erases $t_1$'s finished allocation: Order 101's allocation is lost, inventory ledger conservation is broken, and $t_3$ fails to find an allocated order to dispatch. The run fails with only 4/5 invariants satisfied (20% resolution rate). This is a real-world **Lost Update (Write-After-Write)** on external enterprise state.
+
+#### The Conflict-Ordered Repair (`probeordered`)
+The conflict-ordered topology (`probeordered.parallel`) inserts a single declared dependency edge between the conflicting resource footprints: `t2_allocate_standard` waits for `t1_allocate_urgent` ($t_1 \rightarrow t_2$).
+- $t_2$ is delayed to Wave 2, where it reads the committed state produced by $t_1$, observing that available stock has dropped from 20 to 5.
+- $t_2$ correctly allocates the remaining 5 units and flags the remaining 5 units as `BACKORDERED` (status `PARTIALLY_FULFILLED`).
+- **Residual Parallelism**: Unlike a naive collapse to total sequential order, `t3_dispatch_carrier` (which only depends on $t_1$ and writes disjoint file `fulfillment/shipments.json`) executes concurrently alongside $t_2$ in Wave 2.
+- The lost update is completely eliminated: 100% of runs (5/5) resolve cleanly with all 5 business invariants preserved.
+
+#### Task 5 Runs (`gemini-flash-lite` agent)
+
+| task | harness | agent | topology | wall (s) | cost ($) | tokens | node errors | premature consumptions | stale reads | write conflicts | invariants | resolved |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| scm__order-fulfillment | probe | gemini-flash-lite | sequential | 15.89 | 0.0005 | 9966 | 0 | 0 | 6 | 2 | 5/5 | yes |
+| scm__order-fulfillment | probe | gemini-flash-lite | sequential | 12.53 | 0.0005 | 9687 | 0 | 0 | 6 | 2 | 5/5 | yes |
+| scm__order-fulfillment | probe | gemini-flash-lite | sequential | 24.86 | 0.0006 | 10136 | 0 | 0 | 6 | 2 | 5/5 | yes |
+| scm__order-fulfillment | probe | gemini-flash-lite | sequential | 11.47 | 0.0005 | 9879 | 0 | 0 | 6 | 2 | 5/5 | yes |
+| scm__order-fulfillment | probe | gemini-flash-lite | sequential | 14.33 | 0.0006 | 10064 | 0 | 0 | 6 | 2 | 5/5 | yes |
+| scm__order-fulfillment | probe | gemini-flash-lite | parallel | 14.11 | 0.0005 | 9241 | 0 | 0 | 4 | 2 | 4/5 | no |
+| scm__order-fulfillment | probe | gemini-flash-lite | parallel | 47.88 | 0.0005 | 9583 | 0 | 0 | 4 | 2 | 5/5 | yes |
+| scm__order-fulfillment | probe | gemini-flash-lite | parallel | 15.99 | 0.0005 | 9653 | 0 | 0 | 4 | 2 | 4/5 | no |
+| scm__order-fulfillment | probe | gemini-flash-lite | parallel | 25.55 | 0.0006 | 10050 | 0 | 0 | 4 | 2 | 4/5 | no |
+| scm__order-fulfillment | probe | gemini-flash-lite | parallel | 5.42 | 0.0005 | 9704 | 0 | 0 | 4 | 2 | 4/5 | no |
+| scm__order-fulfillment | probeordered | gemini-flash-lite | parallel | 6.30 | 0.0005 | 9859 | 0 | 0 | 6 | 2 | 5/5 | yes |
+| scm__order-fulfillment | probeordered | gemini-flash-lite | parallel | 6.70 | 0.0006 | 10444 | 0 | 0 | 6 | 2 | 5/5 | yes |
+| scm__order-fulfillment | probeordered | gemini-flash-lite | parallel | 56.48 | 0.0006 | 10106 | 0 | 0 | 6 | 2 | 5/5 | yes |
+| scm__order-fulfillment | probeordered | gemini-flash-lite | parallel | 11.97 | 0.0006 | 10714 | 0 | 0 | 6 | 2 | 5/5 | yes |
+| scm__order-fulfillment | probeordered | gemini-flash-lite | parallel | 40.16 | 0.0006 | 10541 | 0 | 0 | 6 | 2 | 5/5 | yes |
+
+#### Task 5 - SCM Order Fulfillment Probes (AVG)
+
+| Task | Harness | Agent | Topology | Wall Clock Time (s) | Cost ($) | Tokens Used | Node Errors | Premature Consumptions | Stale Reads | Write Conflicts | Invariants Passed | Invariant Rate | Resolved |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| scm__order-fulfillment | probe | gemini-flash-lite | sequential | 15.82 | 0.00054 | 9946.4 | 0 | 0 | 6.0 | 2.0 | 5/5 | 1.00 | 5/5 (100%) |
+| scm__order-fulfillment | probe | gemini-flash-lite | parallel | 21.79 | 0.00052 | 9646.2 | 0 | 0 | 4.0 | 2.0 | 4/5 | 0.84 | 1/5 (20%) |
+| scm__order-fulfillment | probeordered | gemini-flash-lite | parallel | 24.32 | 0.00058 | 10332.8 | 0 | 0 | 6.0 | 2.0 | 5/5 | 1.00 | 5/5 (100%) |
 
 <!-- ADDITIONAL:END -->

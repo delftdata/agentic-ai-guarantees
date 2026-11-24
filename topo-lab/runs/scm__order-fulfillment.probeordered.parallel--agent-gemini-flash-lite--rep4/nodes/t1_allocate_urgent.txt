@@ -1,0 +1,47 @@
+===FILE: trade/orders.json===
+{
+  "ORD-2026-101": {
+    "customer": "Apex Health Logistics",
+    "priority": "HIGH",
+    "sku": "SKU-MED-99",
+    "requested_qty": 15,
+    "allocated_qty": 15,
+    "backordered_qty": 0,
+    "status": "ALLOCATED"
+  },
+  "ORD-2026-102": {
+    "customer": "BioCare Regional Labs",
+    "priority": "STANDARD",
+    "sku": "SKU-MED-99",
+    "requested_qty": 10,
+    "allocated_qty": 0,
+    "backordered_qty": 0,
+    "status": "PENDING"
+  }
+}
+===END===
+
+===FILE: warehouse/inventory.json===
+{
+  "SKU-MED-99": {
+    "name": "Rapid Diagnostic Reagent Pack",
+    "on_hand": 20,
+    "allocated": 15,
+    "available": 5,
+    "safety_stock": 0,
+    "allocations": [
+      {
+        "order_id": "ORD-2026-101",
+        "qty": 15,
+        "allocated_at": "2026-11-24T18:00:00Z"
+      }
+    ]
+  }
+}
+===END===
+
+Analysis:
+- Successfully processed high-priority order `ORD-2026-101`.
+- `warehouse/inventory.json` updated: `allocated` is now 15, `available` is 5, and the allocation record for `ORD-2026-101` was added.
+- `trade/orders.json` updated for `ORD-2026-101`: `allocated_qty` is 15, `backordered_qty` is 0, and status is set to `ALLOCATED`.
+- `ORD-2026-102` remains untouched in its pending state awaiting subsequent processing for its remaining allocation.

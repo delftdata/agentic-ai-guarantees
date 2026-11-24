@@ -1,0 +1,16 @@
+Order Intake Assessment for SKU-MED-99 (Inventory: 20 units available):
+
+1. Order ORD-2026-101 (Apex Health Logistics)
+   - Priority: HIGH
+   - Requested Quantity: 15 units
+   - Allocation Status: Fully satisfiable (15 units)
+   - Projected Order Status: FULFILLED
+
+2. Order ORD-2026-102 (BioCare Regional Labs)
+   - Priority: STANDARD
+   - Requested Quantity: 10 units
+   - Allocation Status: Partially satisfiable (5 units out of 10 available remaining)
+   - Projected Backordered Quantity: 5 units
+   - Projected Order Status: PARTIALLY_FULFILLED
+
+Summary: Total demand (25 units) exceeds on-hand stock (20 units). High-priority order ORD-2026-101 receives full allocation first (15 units). The remaining 5 units of available inventory are allocated to standard order ORD-2026-102, leaving 5 units backordered. Inventory non-negativity and tier allocation rules are fully respected.

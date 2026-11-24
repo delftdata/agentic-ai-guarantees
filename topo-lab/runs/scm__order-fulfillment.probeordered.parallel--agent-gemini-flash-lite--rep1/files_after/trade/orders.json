@@ -1,0 +1,20 @@
+{
+  "ORD-2026-101": {
+    "customer": "Apex Health Logistics",
+    "priority": "HIGH",
+    "sku": "SKU-MED-99",
+    "requested_qty": 15,
+    "allocated_qty": 15,
+    "backordered_qty": 0,
+    "status": "ALLOCATED"
+  },
+  "ORD-2026-102": {
+    "customer": "BioCare Regional Labs",
+    "priority": "STANDARD",
+    "sku": "SKU-MED-99",
+    "requested_qty": 10,
+    "allocated_qty": 5,
+    "backordered_qty": 5,
+    "status": "PARTIALLY_FULFILLED"
+  }
+}

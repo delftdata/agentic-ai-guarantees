@@ -1,0 +1,7 @@
+{
+  "instance_id": "scm__order-fulfillment",
+  "benchmark": "SupChain-Bench",
+  "domain": "supply_chain_management",
+  "version": "1.0",
+  "authored": true
+}

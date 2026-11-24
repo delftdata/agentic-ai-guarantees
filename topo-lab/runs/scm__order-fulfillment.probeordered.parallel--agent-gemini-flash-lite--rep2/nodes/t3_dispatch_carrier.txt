@@ -1,0 +1,20 @@
+===FILE: fulfillment/shipments.json===
+{
+  "shipments": [
+    {
+      "shipment_id": "SHP-2026-901",
+      "order_id": "ORD-2026-101",
+      "carrier": "CARRIER-DHL-EXPRESS",
+      "tracking_number": "TRK-DHL-8831",
+      "service_level": "NEXT_DAY_AIR",
+      "packages": 1,
+      "status": "DISPATCHED"
+    }
+  ]
+}
+===END===
+
+**Analysis Summary:**
+- Inspected `trade/orders.json` and verified that high-priority order `ORD-2026-101` has status `"ALLOCATED"`.
+- Generated 3PL freight booking with `CARRIER-DHL-EXPRESS` under shipment ID `SHP-2026-901` and tracking number `TRK-DHL-8831`.
+- Appended the shipment record to `fulfillment/shipments.json` as requested.

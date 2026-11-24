@@ -1,0 +1,17 @@
+Processing the 3PL carrier booking for high-priority order `ORD-2026-101` (`Apex Health Logistics`) which has been successfully allocated.
+
+===FILE: fulfillment/shipments.json===
+{
+  "shipments": [
+    {
+      "shipment_id": "SHP-2026-901",
+      "order_id": "ORD-2026-101",
+      "carrier": "CARRIER-DHL-EXPRESS",
+      "tracking_number": "TRK-DHL-8831",
+      "service_level": "NEXT_DAY_AIR",
+      "packages": 1,
+      "status": "DISPATCHED"
+    }
+  ]
+}
+===END===

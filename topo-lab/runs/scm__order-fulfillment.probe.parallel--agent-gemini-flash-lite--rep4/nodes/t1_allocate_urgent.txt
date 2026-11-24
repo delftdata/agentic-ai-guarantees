@@ -1,0 +1,43 @@
+Processing high-priority order `ORD-2026-101` (Apex Health Logistics) for 15 units of `SKU-MED-99`. Updating warehouse inventory allocations and trade order status accordingly.
+
+===FILE: trade/orders.json===
+{
+  "ORD-2026-101": {
+    "customer": "Apex Health Logistics",
+    "priority": "HIGH",
+    "sku": "SKU-MED-99",
+    "requested_qty": 15,
+    "allocated_qty": 15,
+    "backordered_qty": 0,
+    "status": "ALLOCATED"
+  },
+  "ORD-2026-102": {
+    "customer": "BioCare Regional Labs",
+    "priority": "STANDARD",
+    "sku": "SKU-MED-99",
+    "requested_qty": 10,
+    "allocated_qty": 0,
+    "backordered_qty": 0,
+    "status": "PENDING"
+  }
+}
+===END===
+
+===FILE: warehouse/inventory.json===
+{
+  "SKU-MED-99": {
+    "name": "Rapid Diagnostic Reagent Pack",
+    "on_hand": 20,
+    "allocated": 15,
+    "available": 5,
+    "safety_stock": 0,
+    "allocations": [
+      {
+        "order_id": "ORD-2026-101",
+        "qty": 15,
+        "allocated_at": "2026-11-24T18:00:00Z"
+      }
+    ]
+  }
+}
+===END===

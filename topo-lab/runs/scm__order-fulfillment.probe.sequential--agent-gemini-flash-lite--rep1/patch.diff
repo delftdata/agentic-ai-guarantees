@@ -1,0 +1,16 @@
+diff --git a/audit/manifest.json b/audit/manifest.json
+index 35a2cb7..9b5d63f 100644
+--- a/audit/manifest.json
++++ b/audit/manifest.json
+@@ -1,5 +1,9 @@
+ {
+-  "audit_status": "UNAUDITED",
+-  "total_dispatched": 0,
++  "audit_status": "VERIFIED",
++  "total_dispatched": 15,
++  "total_allocated": 20,
++  "total_backordered": 5,
++  "total_shipments_booked": 1,
++  "inventory_conservation_check": "PASSED",
+   "anomalies_detected": []
+ }

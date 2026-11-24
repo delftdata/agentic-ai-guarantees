@@ -1,0 +1,15 @@
+Order Intake Assessment:
+
+1. Order ORD-2026-101:
+   - Customer: Apex Health Logistics
+   - Priority: HIGH
+   - SKU: SKU-MED-99
+   - Requested Quantity: 15 units
+   - Status: PENDING (eligible for full allocation based on priority and available stock of 20 units).
+
+2. Order ORD-2026-102:
+   - Customer: BioCare Regional Labs
+   - Priority: STANDARD
+   - SKU: SKU-MED-99
+   - Requested Quantity: 10 units
+   - Status: PENDING (eligible for partial allocation of 5 units, with the remaining 5 units backordered, due to inventory scarcity after high-priority allocation).

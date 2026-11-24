@@ -1,0 +1,172 @@
+{
+  "graph": "scm__order-fulfillment.probe.sequential.json",
+  "topology": "sequential",
+  "agent": "gemini-flash-lite",
+  "mock": false,
+  "schedule": [
+    [
+      "t0_intake"
+    ],
+    [
+      "t1_allocate_urgent"
+    ],
+    [
+      "t2_allocate_standard"
+    ],
+    [
+      "t3_dispatch_carrier"
+    ],
+    [
+      "t4_audit_manifest"
+    ]
+  ],
+  "wall_s": 24.86,
+  "total_cost_usd": 0.0006,
+  "overwrite_events": [
+    {
+      "path": "trade/orders.json",
+      "prev_writer": "t1_allocate_urgent",
+      "new_writer": "t2_allocate_standard"
+    },
+    {
+      "path": "warehouse/inventory.json",
+      "prev_writer": "t1_allocate_urgent",
+      "new_writer": "t2_allocate_standard"
+    }
+  ],
+  "nodes": [
+    {
+      "node": "t0_intake",
+      "wall_s": 9.99,
+      "reads": [
+        {
+          "path": "trade/orders.json",
+          "bytes": 435,
+          "writer": "__seed__"
+        }
+      ],
+      "missing_deps": [],
+      "input_tokens": 826,
+      "cache_read_tokens": 0,
+      "output_tokens": 221,
+      "cost_usd": 6e-05,
+      "status": "success",
+      "error": null,
+      "files_written": []
+    },
+    {
+      "node": "t1_allocate_urgent",
+      "wall_s": 1.26,
+      "reads": [
+        {
+          "path": "trade/orders.json",
+          "bytes": 435,
+          "writer": "__seed__"
+        },
+        {
+          "path": "warehouse/inventory.json",
+          "bytes": 176,
+          "writer": "__seed__"
+        }
+      ],
+      "missing_deps": [],
+      "input_tokens": 1412,
+      "cache_read_tokens": 0,
+      "output_tokens": 378,
+      "cost_usd": 0.00011,
+      "status": "success",
+      "error": null,
+      "files_written": [
+        "trade/orders.json",
+        "warehouse/inventory.json"
+      ]
+    },
+    {
+      "node": "t2_allocate_standard",
+      "wall_s": 4.77,
+      "reads": [
+        {
+          "path": "trade/orders.json",
+          "bytes": 438,
+          "writer": "t1_allocate_urgent"
+        },
+        {
+          "path": "warehouse/inventory.json",
+          "bytes": 299,
+          "writer": "t1_allocate_urgent"
+        }
+      ],
+      "missing_deps": [],
+      "input_tokens": 1563,
+      "cache_read_tokens": 0,
+      "output_tokens": 831,
+      "cost_usd": 0.00018,
+      "status": "success",
+      "error": null,
+      "files_written": [
+        "trade/orders.json",
+        "warehouse/inventory.json"
+      ]
+    },
+    {
+      "node": "t3_dispatch_carrier",
+      "wall_s": 1.84,
+      "reads": [
+        {
+          "path": "trade/orders.json",
+          "bytes": 450,
+          "writer": "t2_allocate_standard"
+        },
+        {
+          "path": "fulfillment/shipments.json",
+          "bytes": 22,
+          "writer": "__seed__"
+        }
+      ],
+      "missing_deps": [],
+      "input_tokens": 1461,
+      "cache_read_tokens": 0,
+      "output_tokens": 215,
+      "cost_usd": 9e-05,
+      "status": "success",
+      "error": null,
+      "files_written": [
+        "fulfillment/shipments.json"
+      ]
+    },
+    {
+      "node": "t4_audit_manifest",
+      "wall_s": 7.0,
+      "reads": [
+        {
+          "path": "trade/orders.json",
+          "bytes": 450,
+          "writer": "t2_allocate_standard"
+        },
+        {
+          "path": "warehouse/inventory.json",
+          "bytes": 417,
+          "writer": "t2_allocate_standard"
+        },
+        {
+          "path": "fulfillment/shipments.json",
+          "bytes": 278,
+          "writer": "t3_dispatch_carrier"
+        },
+        {
+          "path": "audit/manifest.json",
+          "bytes": 87,
+          "writer": "__seed__"
+        }
+      ],
+      "missing_deps": [],
+      "input_tokens": 3066,
+      "cache_read_tokens": 0,
+      "output_tokens": 163,
+      "cost_usd": 0.00014,
+      "status": "success",
+      "error": null,
+      "files_written": []
+    }
+  ]
+}

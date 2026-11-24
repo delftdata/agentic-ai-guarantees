@@ -1,0 +1,95 @@
+{
+  "nodes": [
+    {
+      "id": "t0_intake",
+      "instruction": "You are given the current complete contents of trade/orders.json. Analyze the pending orders (ORD-2026-101 and ORD-2026-102), verify requested quantities and priorities, and output a concise order intake assessment as plain text.",
+      "reads": [
+        "trade/orders.json"
+      ],
+      "writes": [],
+      "deps": [],
+      "guard": null
+    },
+    {
+      "id": "t1_allocate_urgent",
+      "instruction": "You are given the current complete contents of two files: trade/orders.json and warehouse/inventory.json. Process high-priority order ORD-2026-101 (Apex Health Logistics, requested_qty: 15 of SKU-MED-99).\n\nIn warehouse/inventory.json, update SKU-MED-99:\n- Increase allocated by 15 (allocated becomes 15).\n- Decrease available by 15 (available becomes 5).\n- In the allocations list, append: {\"order_id\": \"ORD-2026-101\", \"qty\": 15, \"allocated_at\": \"2026-11-24T18:00:00Z\"}.\n\nIn trade/orders.json, update ORD-2026-101:\n- Set allocated_qty to 15.\n- Set backordered_qty to 0.\n- Set status to \"ALLOCATED\".\n\nPreserve all other fields and orders exactly as they appear in the files you were given. Output the complete updated contents of BOTH files, each in its own FILE block: one for trade/orders.json and one for warehouse/inventory.json.",
+      "reads": [
+        "trade/orders.json",
+        "warehouse/inventory.json"
+      ],
+      "writes": [
+        "trade/orders.json",
+        "warehouse/inventory.json"
+      ],
+      "deps": [
+        "t0_intake"
+      ],
+      "guard": null
+    },
+    {
+      "id": "t2_allocate_standard",
+      "instruction": "You are given the current complete contents of two files: trade/orders.json and warehouse/inventory.json. Process standard order ORD-2026-102 (BioCare Regional Labs, requested_qty: 10 of SKU-MED-99).\n\nCheck available units of SKU-MED-99 in warehouse/inventory.json. Allocate up to the current available quantity (do not allow available to drop below 0):\n- If available is 10 or more: allocate 10 units (allocated += 10, available -= 10), and set ORD-2026-102 allocated_qty to 10, backordered_qty to 0, status to \"ALLOCATED\".\n- If available is less than 10 (e.g. 5 units): allocate all remaining available units (e.g. 5 units: allocated += 5, available = 0), and set ORD-2026-102 allocated_qty to 5, backordered_qty to 5, status to \"PARTIALLY_FULFILLED\".\n- Append the allocated record to allocations: {\"order_id\": \"ORD-2026-102\", \"qty\": <allocated_qty>, \"allocated_at\": \"2026-11-24T18:00:00Z\"}.\n\nPreserve all other fields and orders exactly as they appear in the files you were given. Output the complete updated contents of BOTH files, each in its own FILE block: one for trade/orders.json and one for warehouse/inventory.json.",
+      "reads": [
+        "trade/orders.json",
+        "warehouse/inventory.json"
+      ],
+      "writes": [
+        "trade/orders.json",
+        "warehouse/inventory.json"
+      ],
+      "deps": [
+        "t0_intake",
+        "t1_allocate_urgent"
+      ],
+      "guard": null
+    },
+    {
+      "id": "t3_dispatch_carrier",
+      "instruction": "You are given the current complete contents of two files: trade/orders.json and fulfillment/shipments.json. Check order ORD-2026-101. If its status is \"ALLOCATED\" or \"FULFILLED\", book 3PL freight with CARRIER-DHL-EXPRESS.\n\nIn fulfillment/shipments.json, append to shipments:\n{\n  \"shipment_id\": \"SHP-2026-901\",\n  \"order_id\": \"ORD-2026-101\",\n  \"carrier\": \"CARRIER-DHL-EXPRESS\",\n  \"tracking_number\": \"TRK-DHL-8831\",\n  \"service_level\": \"NEXT_DAY_AIR\",\n  \"packages\": 1,\n  \"status\": \"DISPATCHED\"\n}\n\nPreserve all other fields and records. Output the complete updated contents of fulfillment/shipments.json in a single FILE block.",
+      "reads": [
+        "trade/orders.json",
+        "fulfillment/shipments.json"
+      ],
+      "writes": [
+        "fulfillment/shipments.json"
+      ],
+      "deps": [
+        "t1_allocate_urgent"
+      ],
+      "guard": null
+    },
+    {
+      "id": "t4_audit_manifest",
+      "instruction": "You are given the current complete contents of trade/orders.json, warehouse/inventory.json, fulfillment/shipments.json, and audit/manifest.json. Compile a system-wide audit manifest into audit/manifest.json. Record the total units allocated, total units backordered, total shipments booked, and list any consistency anomalies detected (such as over-allocated inventory or missing order updates). Output the complete updated audit/manifest.json in a single FILE block.",
+      "reads": [
+        "trade/orders.json",
+        "warehouse/inventory.json",
+        "fulfillment/shipments.json",
+        "audit/manifest.json"
+      ],
+      "writes": [
+        "audit/manifest.json"
+      ],
+      "deps": [
+        "t0_intake",
+        "t1_allocate_urgent",
+        "t2_allocate_standard",
+        "t3_dispatch_carrier"
+      ],
+      "guard": null
+    }
+  ],
+  "final_node": "t4_audit_manifest",
+  "topology": "overparallel",
+  "schedule": [
+    [
+      "t0_intake",
+      "t1_allocate_urgent",
+      "t2_allocate_standard",
+      "t3_dispatch_carrier"
+    ],
+    [
+      "t4_audit_manifest"
+    ]
+  ]
+}

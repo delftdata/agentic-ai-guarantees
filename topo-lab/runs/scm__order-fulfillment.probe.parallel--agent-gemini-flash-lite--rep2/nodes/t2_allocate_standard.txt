@@ -1,0 +1,54 @@
+Processing the standard order `ORD-2026-102` against the current warehouse inventory where 5 units of `SKU-MED-99` remain available (since `ORD-2026-101` has claimed 15 units):
+- Available units: 5
+- Allocation for `ORD-2026-102`: 5 units
+- Backordered quantity: 5 units
+- Order Status: `PARTIALLY_FULFILLED`
+
+Below are the updated JSON files reflecting this transaction while maintaining system-wide inventory conservation.
+
+===FILE: trade/orders.json===
+{
+  "ORD-2026-101": {
+    "customer": "Apex Health Logistics",
+    "priority": "HIGH",
+    "sku": "SKU-MED-99",
+    "requested_qty": 15,
+    "allocated_qty": 15,
+    "backordered_qty": 0,
+    "status": "ALLOCATED"
+  },
+  "ORD-2026-102": {
+    "customer": "BioCare Regional Labs",
+    "priority": "STANDARD",
+    "sku": "SKU-MED-99",
+    "requested_qty": 10,
+    "allocated_qty": 5,
+    "backordered_qty": 5,
+    "status": "PARTIALLY_FULFILLED"
+  }
+}
+===END===
+
+===FILE: warehouse/inventory.json===
+{
+  "SKU-MED-99": {
+    "name": "Rapid Diagnostic Reagent Pack",
+    "on_hand": 20,
+    "allocated": 20,
+    "available": 0,
+    "safety_stock": 0,
+    "allocations": [
+      {
+        "order_id": "ORD-2026-101",
+        "qty": 15,
+        "allocated_at": "2026-11-24T18:00:00Z"
+      },
+      {
+        "order_id": "ORD-2026-102",
+        "qty": 5,
+        "allocated_at": "2026-11-24T18:00:00Z"
+      }
+    ]
+  }
+}
+===END===

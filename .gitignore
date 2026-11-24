@@ -25,3 +25,5 @@ env/
 # Legacy local artifacts
 setup_keys.sh
 agentic-ai-guarantees/
+.env
+*.env

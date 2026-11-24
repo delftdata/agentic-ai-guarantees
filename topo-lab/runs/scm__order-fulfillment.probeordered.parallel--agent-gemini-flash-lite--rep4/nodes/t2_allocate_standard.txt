@@ -1,0 +1,53 @@
+===FILE: trade/orders.json===
+{
+  "ORD-2026-101": {
+    "customer": "Apex Health Logistics",
+    "priority": "HIGH",
+    "sku": "SKU-MED-99",
+    "requested_qty": 15,
+    "allocated_qty": 15,
+    "backordered_qty": 0,
+    "status": "ALLOCATED"
+  },
+  "ORD-2026-102": {
+    "customer": "BioCare Regional Labs",
+    "priority": "STANDARD",
+    "sku": "SKU-MED-99",
+    "requested_qty": 10,
+    "allocated_qty": 5,
+    "backordered_qty": 5,
+    "status": "PARTIALLY_FULFILLED"
+  }
+}
+===END===
+
+===FILE: warehouse/inventory.json===
+{
+  "SKU-MED-99": {
+    "name": "Rapid Diagnostic Reagent Pack",
+    "on_hand": 20,
+    "allocated": 20,
+    "available": 0,
+    "safety_stock": 0,
+    "allocations": [
+      {
+        "order_id": "ORD-2026-101",
+        "qty": 15,
+        "allocated_at": "2026-11-24T18:00:00Z"
+      },
+      {
+        "order_id": "ORD-2026-102",
+        "qty": 5,
+        "allocated_at": "2026-11-24T18:00:00Z"
+      }
+    ]
+  }
+}
+===END===
+
+Analysis:
+- Standard order `ORD-2026-102` evaluated against remaining inventory for `SKU-MED-99`.
+- Available quantity was 5 units. All 5 remaining units were allocated to `ORD-2026-102`.
+- `allocated_qty` for `ORD-2026-102` set to 5, `backordered_qty` set to 5, and status updated to `PARTIALLY_FULFILLED`.
+- `warehouse/inventory.json` updated: `allocated` is now 20, `available` is 0, and the new allocation record for `ORD-2026-102` was appended.
+- Inventory conservation maintained (`on_hand` 20 = `allocated` 20 + `available` 0).

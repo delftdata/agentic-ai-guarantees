@@ -1,0 +1,22 @@
+Order Intake Assessment for SKU-MED-99 (Total On-Hand Inventory: 20 units):
+
+1. High-Priority Order (ORD-2026-101):
+   - Customer: Apex Health Logistics
+   - Priority: HIGH
+   - Requested Quantity: 15 units
+   - Allocation Status: Full allocation required (15 units)
+   - Resulting Order Status: FULFILLED (upon allocation)
+
+2. Standard Order (ORD-2026-102):
+   - Customer: BioCare Regional Labs
+   - Priority: STANDARD
+   - Requested Quantity: 10 units
+   - Allocation Status: Partial allocation (5 units remaining from the 20 total on-hand after high-priority allocation)
+   - Backordered Quantity: 5 units
+   - Resulting Order Status: PARTIALLY_FULFILLED
+
+3. Inventory Scarcity & Invariant Check:
+   - Total Demand: 25 units (15 + 10)
+   - Total Available Inventory: 20 units
+   - Total Allocated Inventory post-allocation: 15 (ORD-2026-101) + 5 (ORD-2026-102) = 20 units.
+   - Allocated inventory equals on-hand inventory, satisfying the non-negativity and stock conservation invariants (`available = 0`).

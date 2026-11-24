@@ -1,0 +1,60 @@
+diff --git a/audit/manifest.json b/audit/manifest.json
+index 38b2591..4e287a2 100644
+-- a/audit/manifest.json
++++ b/audit/manifest.json
+@@ -1,5 +1,9 @@
+ {
+-  "audit_status": "UNAUDITED",
+-  "total_dispatched": 0,
++  "audit_status": "PASSED",
++  "total_allocated": 20,
++  "total_backordered": 5,
++  "total_dispatched": 1,
+   "anomalies_detected": []
+-}
+\ No newline at end of file
++}
+diff --git a/trade/orders.json b/trade/orders.json
+index d926955..bb96a09 100644
+-- a/trade/orders.json
++++ b/trade/orders.json
+@@ -3,9 +3,9 @@
+     "customer": "Apex Health Logistics",
+     "priority": "HIGH",
+     "sku": "SKU-MED-99",
+     "requested_qty": 15,
+-    "allocated_qty": 0,
++    "allocated_qty": 15,
+     "backordered_qty": 0,
+-    "status": "PENDING"
++    "status": "ALLOCATED"
+   },
+   "ORD-2026-102": {
+     "customer": "BioCare Regional Labs",
+diff --git a/warehouse/inventory.json b/warehouse/inventory.json
+index 5158652..3176669 100644
+-- a/warehouse/inventory.json
++++ b/warehouse/inventory.json
+@@ -2,12 +2,19 @@
+   "SKU-MED-99": {
+     "name": "Rapid Diagnostic Reagent Pack",
+     "on_hand": 20,
+-    "allocated": 5,
+-    "available": 15,
++    "allocated": 20,
++    "available": 0,
+     "safety_stock": 0,
+     "allocations": [
+       {
++        "order_id": "ORD-2026-101",
++        "qty": 15,
++        "allocated_at": "2026-11-24T18:00:00Z"
++      },
++      {
+         "order_id": "ORD-2026-102",
+         "qty": 5,
+         "allocated_at": "2026-11-24T18:00:00Z"
+       }
+     ]
+   }
++}

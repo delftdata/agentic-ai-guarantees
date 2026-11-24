@@ -1,0 +1,16 @@
+**Order Intake Assessment: SKU-MED-99 Inventory Scarcity**
+
+1. **Inventory Availability Overview**:
+   - Total physical stock on hand: 20 units.
+   - Total demand across pending orders: 25 units (15 units from ORD-2026-101 + 10 units from ORD-2026-102).
+   - Deficit: 5 units. Full fulfillment of both orders is impossible without violating inventory non-negativity invariants (`available >= 0`).
+
+2. **Order Priority Analysis**:
+   - **ORD-2026-101** (Apex Health Logistics): High priority, requested quantity = 15 units. Under SOP, this order receives first claim on available inventory. It will be fully satisfied (15 units allocated, 0 backordered, status: FULFILLED).
+   - **ORD-2026-102** (BioCare Regional Labs): Standard priority, requested quantity = 10 units. This order will receive the remaining available inventory after high-priority allocation (5 units allocated, 5 units backordered, status: PARTIALLY_FULFILLED).
+
+3. **Required Actions**:
+   - Update warehouse inventory ledger (`warehouse/inventory.json`) to reflect 20 units allocated and 0 units available.
+   - Update trade orders registry (`trade/orders.json`) with the respective allocated/backordered quantities and statuses.
+   - Generate 3PL freight booking for fully allocated order `ORD-2026-101` and record in `fulfillment/shipments.json`.
+   - Compile final audit manifest in `audit/manifest.json`.

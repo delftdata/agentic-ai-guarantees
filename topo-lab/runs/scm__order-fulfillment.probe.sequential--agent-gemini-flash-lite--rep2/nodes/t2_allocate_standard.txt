@@ -1,0 +1,56 @@
+Based on the inventory scarcity analysis and warehouse ledger, `SKU-MED-99` has 5 units currently available (since 15 units are already allocated to high-priority order `ORD-2026-101`). 
+
+Following the allocation SOP under inventory scarcity:
+1. Standard order `ORD-2026-102` receives the remaining 5 available units.
+2. The remaining 5 units are placed on backorder (`backordered_qty: 5`).
+3. The order status for `ORD-2026-102` is updated to `PARTIALLY_FULFILLED`.
+4. The warehouse inventory ledger is updated to allocate the remaining 5 units, bringing available stock to 0 while maintaining strict non-negativity and inventory conservation (`on_hand: 20`, `allocated: 20`, `available: 0`).
+
+Here are the updated system files:
+
+===FILE: trade/orders.json===
+{
+  "ORD-2026-101": {
+    "customer": "Apex Health Logistics",
+    "priority": "HIGH",
+    "sku": "SKU-MED-99",
+    "requested_qty": 15,
+    "allocated_qty": 15,
+    "backordered_qty": 0,
+    "status": "ALLOCATED"
+  },
+  "ORD-2026-102": {
+    "customer": "BioCare Regional Labs",
+    "priority": "STANDARD",
+    "sku": "SKU-MED-99",
+    "requested_qty": 10,
+    "allocated_qty": 5,
+    "backordered_qty": 5,
+    "status": "PARTIALLY_FULFILLED"
+  }
+}
+===END===
+
+===FILE: warehouse/inventory.json===
+{
+  "SKU-MED-99": {
+    "name": "Rapid Diagnostic Reagent Pack",
+    "on_hand": 20,
+    "allocated": 20,
+    "available": 0,
+    "safety_stock": 0,
+    "allocations": [
+      {
+        "order_id": "ORD-2026-101",
+        "qty": 15,
+        "allocated_at": "2026-11-24T18:00:00Z"
+      },
+      {
+        "order_id": "ORD-2026-102",
+        "qty": 5,
+        "allocated_at": "2026-11-24T18:00:00Z"
+      }
+    ]
+  }
+}
+===END===

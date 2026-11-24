@@ -1,0 +1,17 @@
+===FILE: fulfillment/shipments.json===
+{
+  "shipments": [
+    {
+      "shipment_id": "SHP-2026-901",
+      "order_id": "ORD-2026-101",
+      "carrier": "CARRIER-DHL-EXPRESS",
+      "tracking_number": "TRK-DHL-8831",
+      "service_level": "NEXT_DAY_AIR",
+      "packages": 1,
+      "status": "DISPATCHED"
+    }
+  ]
+}
+===END===
+
+I have successfully verified the allocation status of high-priority order `ORD-2026-101` and booked the 3PL freight with `CARRIER-DHL-EXPRESS`, updating `fulfillment/shipments.json` with the new shipment record.
